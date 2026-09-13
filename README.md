@@ -446,36 +446,38 @@
         renderCartoonHands(currentHand);
     }
 
-    // 根據要數的數字，顯示對應數量的手指（連同完整掌心）
+    // 永遠顯示完整手掌（5根手指），需要數的豎起，多餘的一開始就收起
     function renderCartoonHands(handCount) {
         const container = document.getElementById('hand-area');
         container.innerHTML = '';
 
-        // 左手：最多顯示 5 根
-        const leftCount = Math.min(handCount, 5);
-        const leftHand = createCartoonHand(0, leftCount, false);
+        // 左手永遠完整出現（5根）
+        // handCount <= 5 時：前 handCount 根豎起，其餘一開始收起
+        // handCount > 5 時：全部 5 根豎起
+        const leftUpright = Math.min(handCount, 5);
+        const leftHand = createFullHand(0, leftUpright, false);
         container.appendChild(leftHand);
 
-        // 如果超過 5 根，再顯示右手（鏡像）
+        // 只要需要超過 5 根，就出現完整右手
         if (handCount > 5) {
-            const rightCount = handCount - 5;
-            const rightHand = createCartoonHand(5, rightCount, true);
+            const rightUpright = handCount - 5;   // 右手要豎起幾根
+            const rightHand = createFullHand(5, rightUpright, true);
             container.appendChild(rightHand);
         }
     }
 
     /**
-     * 建立一隻手掌（只顯示需要的手指數量 + 完整掌心）
-     * startIndex  : 這隻手在整體計數的起始偏移（0 或 5）
-     * fingerCount : 這隻手要顯示幾根手指
-     * isRight     : 是否為右手（需要鏡像）
+     * 建立一隻「完整」手掌（永遠 5 根手指）
+     * startIndex   : 這隻手在整體計數的起始偏移（0 或 5）
+     * uprightCount : 這隻手要豎起幾根手指（其餘一開始就收起）
+     * isRight      : 是否為右手（需要鏡像）
      */
-    function createCartoonHand(startIndex, fingerCount, isRight) {
+    function createFullHand(startIndex, uprightCount, isRight) {
         const handWrap = document.createElement('div');
         handWrap.className = 'cartoon-hand-container' + (isRight ? ' right-hand' : '');
         handWrap.id = isRight ? 'hand-right' : 'hand-left';
 
-        // 完整掌心（永遠有）
+        // 完整掌心
         handWrap.innerHTML = `
             <div class="palm-thumb-pad"></div>
             <div class="palm-main"></div>
@@ -483,24 +485,32 @@
 
         const fingerClasses = ['f-thumb', 'f-index', 'f-middle', 'f-ring', 'f-pinky'];
 
-        // 只生成需要的手指數量
-        for (let i = 0; i < fingerCount; i++) {
+        // 永遠生成完整的 5 根手指
+        for (let i = 0; i < 5; i++) {
             const globalIndex = startIndex + i + 1;          // 1~5 或 6~10
-            const displayNum = currentMind + globalIndex;   // 心 + 這根手指的序號
+            const isUpright = i < uprightCount;              // 是否需要豎起讓學生點
+            const displayNum = currentMind + globalIndex;
 
             const finger = document.createElement('div');
             finger.className = `c-finger ${fingerClasses[i]}`;
             finger.id = `finger-${globalIndex}`;
             finger.dataset.index = globalIndex;
-            finger.dataset.num = displayNum;
-            finger.style.cursor = 'pointer';
-            finger.onclick = () => clickFinger(globalIndex, displayNum);
 
-            // 數字氣泡
-            finger.innerHTML = `<div class="finger-bubble" id="bubble-${globalIndex}">${displayNum}</div>`;
+            if (isUpright) {
+                // 需要計算的手指：豎起、可點擊
+                finger.style.cursor = 'pointer';
+                finger.onclick = () => clickFinger(globalIndex, displayNum);
+                finger.innerHTML = `<div class="finger-bubble" id="bubble-${globalIndex}">${displayNum}</div>`;
+            } else {
+                // 多餘的手指：一開始就收起，不可點
+                finger.classList.add('folded');
+                finger.style.cursor = 'default';
+                finger.style.opacity = '0.7';
+            }
 
             handWrap.appendChild(finger);
         }
+
         return handWrap;
     }
 
@@ -525,26 +535,31 @@
             finger.classList.add('folded');
         }
 
-        // 讀出當前數字
+        // 只讀出當前數字（學生靠聽覺 + 看手指上的數字）
         speakCantonese(num.toString());
 
-        // 更新提示（不透露最終答案）
-        document.getElementById('hint-text').innerText = 
-            `已數 ${currentClickIndex} 根 → 現在是 ${num}`;
+        // 底部提示只顯示進度，絕不寫出答案數字
+        if (currentClickIndex < totalToFold) {
+            document.getElementById('hint-text').innerText = `已數 ${currentClickIndex} 根，請繼續點下一根手指`;
+        } else {
+            document.getElementById('hint-text').innerText = '請看看最後一根手指上的數字，然後把答案填到上面空格裡';
+        }
 
-        // 如果這隻手的手指全部折完，就合實成拳頭
+        // 檢查是否要合實拳頭
         checkAndMakeFist();
     }
 
-    // 檢查是否要合實拳頭
+    // 檢查是否要合實拳頭（全部需要的手指都折完才合）
     function checkAndMakeFist() {
-        // 左手：折了這隻手全部需要的手指就合拳
         const leftNeeded = Math.min(5, totalToFold);
+
+        // 左手：需要的手指全部折完 → 合拳
         if (currentClickIndex >= leftNeeded) {
             const leftHand = document.getElementById('hand-left');
             if (leftHand) leftHand.classList.add('fist');
         }
-        // 右手：折了超過5根且全部完成才合拳
+
+        // 右手：需要的手指全部折完 → 合拳
         if (totalToFold > 5 && currentClickIndex >= totalToFold) {
             const rightHand = document.getElementById('hand-right');
             if (rightHand) rightHand.classList.add('fist');
