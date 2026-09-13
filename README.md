@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>「心手口」18以內加數練習機</title>
     <!-- Canvas Confetti 答對特效庫 -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -32,8 +32,6 @@
             border: 6px solid #86efac;
             position: relative;
         }
-        
-        /* 標題與語音引導 */
         .header-area {
             display: flex;
             align-items: center;
@@ -66,8 +64,6 @@
             transform: translateY(4px);
             box-shadow: none;
         }
-
-        /* 題目區域 */
         .equation-box {
             display: flex;
             justify-content: center;
@@ -113,10 +109,8 @@
             color: #1d4ed8;
             background: #ffffff;
         }
-
-        /* 手指互動區 (初始可隱藏，按燈泡時展開，亦可預設顯示) */
         .hand-area {
-            display: none; /* 按燈泡或互動時開啟 */
+            display: none;
             justify-content: center;
             align-items: flex-end;
             gap: 20px;
@@ -167,8 +161,6 @@
             background-color: #ffedd5;
             border-style: dashed;
         }
-
-        /* 按鈕區 */
         .action-area {
             display: flex;
             justify-content: center;
@@ -207,18 +199,21 @@
             transform: translateY(5px);
             box-shadow: none;
         }
+        /* small responsive adjustments */
+        @media (max-width: 520px) {
+            .num-val { font-size: 40px; }
+            .operator { font-size: 34px; }
+            .ans-input { width: 80px; height: 56px; font-size: 36px; }
+        }
     </style>
 </head>
 <body>
-
 <div class="container">
-    <!-- 標題與廣東話嘴巴按鈕 -->
     <div class="header-area">
-        <button class="btn-icon" onclick="playMouthSpeech()" title="讀出題目">🗣️</button>
+        <button class="btn-icon" id="mouth-btn" onclick="playMouthSpeech()" title="讀出題目" aria-label="讀出題目">🗣️</button>
         <h1>「心手口」18以內加數練習機</h1>
     </div>
 
-    <!-- 題目區域 -->
     <div class="equation-box">
         <div class="num-card">
             <div class="tag-title">❤️ 心</div>
@@ -232,23 +227,23 @@
         <div class="operator">＝</div>
         <div class="num-card">
             <div class="tag-title">答案</div>
-            <input type="number" class="ans-input" id="user-ans" placeholder="?" />
+            <input type="number" class="ans-input" id="user-ans" placeholder="?" min="0" max="18" step="1" aria-label="答案輸入" />
         </div>
-        
-        <!-- 小提示燈泡按鈕 -->
-        <button class="btn-icon" style="position: absolute; right: -15px; bottom: -15px;" onclick="playBulbSpeech()" title="點擊獲得提示">💡</button>
+
+        <button class="btn-icon" id="bulb-btn" style="position: absolute; right: -15px; bottom: -15px;" onclick="playBulbSpeech()" title="點擊獲得提示" aria-label="顯示提示">💡</button>
     </div>
 
-    <!-- 手指互動區 (點擊燈泡時展開或顯示) -->
-    <div class="hand-area" id="hand-area">
+    <div class="hand-area" id="hand-area" aria-hidden="true" aria-label="手指區">
         <!-- 由 JavaScript 動態生成手指 -->
     </div>
 
-    <!-- 操作與下一題按鈕 -->
     <div class="action-area">
-        <button class="btn-green" onclick="checkAnswer()">提交答案</button>
-        <button class="btn-blue" id="next-btn" onclick="nextQuestion()">➡️ 下一題</button>
+        <button class="btn-green" id="submit-btn" onclick="checkAnswer()" aria-label="提交答案">提交答案</button>
+        <button class="btn-blue" id="next-btn" onclick="nextQuestion()" aria-label="下一題">➡️ 下一題</button>
     </div>
+
+    <!-- Live region for screen readers -->
+    <div id="sr-live" style="position: absolute; left: -9999px; width:1px; height:1px; overflow:hidden;" aria-live="polite"></div>
 </div>
 
 <script>
@@ -258,34 +253,72 @@
     let targetAnswer = 9;
     let currentClickIndex = 0;
 
-    // 音效合成 (叮一聲)
+    // Reusable AudioContext to avoid creating many contexts
+    let audioCtx = null;
+
+    function getAudioContext() {
+        if (!audioCtx) {
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                audioCtx = null;
+            }
+        }
+        return audioCtx;
+    }
+
+    // 叮一聲
     function playDingSound() {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const ctx = getAudioContext();
+        if (!ctx) return; // some browsers block audio without gesture
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sine';
         osc.frequency.setValueAtTime(800, ctx.currentTime);
         gain.gain.setValueAtTime(0.3, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.3);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.25);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start();
-        osc.stop(ctx.currentTime + 0.3);
+        osc.stop(ctx.currentTime + 0.25);
     }
 
-    // 廣東話語音朗讀 (zh-HK)
+    // 尋找合適的粵語語音（有些瀏覽器沒有）
+    let selectedCantoneseVoice = null;
+    function pickCantoneseVoice() {
+        const voices = window.speechSynthesis.getVoices() || [];
+        if (!voices.length) return null;
+        // prefer voices that contain 'yue' / 'Cantonese' / 'Hong Kong' / 'HongKong' / 'HK'
+        const prefer = voices.find(v => /yue|cantonese|hong ?kong|hk/i.test(v.name + ' ' + v.lang));
+        return prefer || voices.find(v => /zh/i.test(v.lang)) || voices[0];
+    }
+    // ensure voices loaded
+    window.speechSynthesis.onvoiceschanged = () => {
+        selectedCantoneseVoice = pickCantoneseVoice();
+    };
+
     function speakCantonese(text, callback) {
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'zh-HK'; // 設定廣東話
-            utterance.rate = 0.85;    // 放慢語速適合小學生
-            utterance.pitch = 1.1;
-            if (callback) {
-                utterance.onend = callback;
-            }
-            window.speechSynthesis.speak(utterance);
+        if (!('speechSynthesis' in window)) {
+            // fallback: update sr-live for screen readers
+            const sr = document.getElementById('sr-live');
+            sr.textContent = text;
+            if (callback) callback();
+            return;
         }
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        // prefer selected voice if available
+        if (selectedCantoneseVoice) {
+            utterance.voice = selectedCantoneseVoice;
+        }
+        // set a reasonable lang; many browsers accept 'zh-HK' or 'yue-HK'
+        utterance.lang = selectedCantoneseVoice ? selectedCantoneseVoice.lang || 'zh-HK' : 'zh-HK';
+        utterance.rate = 0.85;
+        utterance.pitch = 1.05;
+        if (callback) utterance.onend = callback;
+        window.speechSynthesis.speak(utterance);
+        // also update sr-live (useful when voices not present)
+        document.getElementById('sr-live').textContent = text;
     }
 
     // 初始化題目
@@ -298,7 +331,8 @@
         document.getElementById('num-mind').innerText = currentMind;
         document.getElementById('num-hand').innerText = currentHand;
         document.getElementById('user-ans').value = '';
-        document.getElementById('hand-area').style.display = 'none'; // 初始隱藏手掌
+        document.getElementById('hand-area').style.display = 'none';
+        document.getElementById('hand-area').setAttribute('aria-hidden', 'true');
         document.getElementById('next-btn').style.display = 'none';
 
         renderFingers(currentHand);
@@ -327,12 +361,21 @@
         group.className = 'hand-group';
 
         for (let i = 1; i <= count; i++) {
-            let globalIndex = startIndex + i;
-            let displayNum = currentMind + globalIndex;
+            let globalIndex = startIndex + i; // 1..9
+            let displayNum = currentMind + globalIndex; // show currentMind + 1..currentMind+handCount
 
             const fingerItem = document.createElement('div');
             fingerItem.className = 'finger-item';
+            fingerItem.tabIndex = 0;
+            fingerItem.setAttribute('role', 'button');
+            fingerItem.setAttribute('aria-label', `手指 ${globalIndex} 數字 ${displayNum}`);
             fingerItem.onclick = () => clickFinger(globalIndex, displayNum);
+            fingerItem.onkeydown = (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    clickFinger(globalIndex, displayNum);
+                }
+            };
 
             fingerItem.innerHTML = `
                 <div class="num-bubble" id="bubble-${globalIndex}">${displayNum}</div>
@@ -353,62 +396,91 @@
         currentClickIndex++;
         playDingSound();
 
-        // 顯示數字氣泡與收起手指
-        document.getElementById(`bubble-${index}`).style.visibility = 'visible';
-        document.getElementById(`finger-${index}`).classList.add('folded');
+        const bubble = document.getElementById(`bubble-${index}`);
+        const finger = document.getElementById(`finger-${index}`);
+        if (bubble) bubble.style.visibility = 'visible';
+        if (finger) finger.classList.add('folded');
 
-        // 讀出對應順數數字
         speakCantonese(num.toString());
     }
 
-    // 按鈕功能：左上角嘴巴按鈕
+    // 左上角嘴巴按鈕
     function playMouthSpeech() {
         speakCantonese(`${currentMind} 加 ${currentHand} 等於幾多呀？`);
     }
 
-    // 按鈕功能：題目下方燈泡按鈕 (顯示手掌並播放提示)
+    // 顯示手掌並播放提示 (點燈泡)
     function playBulbSpeech() {
-        // 出現手掌區域
-        document.getElementById('hand-area').style.display = 'flex';
-        // 朗讀指定提示語音
+        // reset finger interaction for this question so student can try again
+        currentClickIndex = 0;
+        renderFingers(currentHand);
+
+        const handArea = document.getElementById('hand-area');
+        handArea.style.display = 'flex';
+        handArea.setAttribute('aria-hidden', 'false');
+
         speakCantonese(`心裏面記住 ${currentMind}，順數加上手指 ${currentHand}，等於幾多呢？`);
     }
 
     // 提交答案與核對
     function checkAnswer() {
-        const userVal = parseInt(document.getElementById('user-ans').value);
+        const input = document.getElementById('user-ans');
+        const raw = input.value;
+        const userVal = parseInt(raw, 10);
         if (isNaN(userVal)) {
             speakCantonese("請先填寫答案喔！");
             return;
         }
 
         if (userVal === targetAnswer) {
-            // 彩帶特效
             confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
             document.getElementById('next-btn').style.display = 'inline-block';
-            
-            // 答對回饋語音
             speakCantonese("你答對咗啦！");
+            // announce for screen readers
+            document.getElementById('sr-live').textContent = '答對了！按下一題';
         } else {
             speakCantonese("再數一次手指試試看！");
+            document.getElementById('sr-live').textContent = '答案錯誤，請再試一次';
         }
     }
 
-    // 隨機生成下一題 (18以內加數)
+    // Enter 鍵提交
+    document.getElementById('user-ans').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            checkAnswer();
+        }
+    });
+
+    // 隨機生成下一題 (18 以內加數)
     function nextQuestion() {
-        let nextMind = Math.floor(Math.random() * 9) + 1; // 1~9
+        // 1..9 for mind
+        let nextMind = Math.floor(Math.random() * 9) + 1;
         let maxHand = 18 - nextMind;
         let handLimit = Math.min(9, maxHand);
-        let nextHand = Math.floor(Math.random() * handLimit) + 1; // 1~9
+        // ensure handLimit at least 1
+        handLimit = Math.max(1, handLimit);
+        let nextHand = Math.floor(Math.random() * handLimit) + 1; // 1..handLimit
 
         initQuestion(nextMind, nextHand);
     }
 
-    // 頁面載入後預設開啟題目 1 (4 + 5 = 9)
+    // 頁面載入後預設題目
     window.onload = function() {
+        // try to prefetch voices
+        selectedCantoneseVoice = pickCantoneseVoice();
         initQuestion(4, 5);
+        // resume audio context upon first user gesture, if needed
+        const resumeAudio = () => {
+            const ctx = getAudioContext();
+            if (ctx && ctx.state === 'suspended') ctx.resume();
+            // remove handlers once resumed
+            window.removeEventListener('click', resumeAudio);
+            window.removeEventListener('keydown', resumeAudio);
+        };
+        window.addEventListener('click', resumeAudio);
+        window.addEventListener('keydown', resumeAudio);
     };
 </script>
-
 </body>
 </html>
