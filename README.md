@@ -94,92 +94,50 @@
             background: #ffffff;
         }
 
-        /* 🖐️ 完整卡通手掌互動區 */
+        /* 🖐️ 一排卡通手指（不分左右手） */
         .hand-area {
             display: none;
             justify-content: center;
             align-items: flex-end;
-            gap: 40px;
-            min-height: 260px;
-            margin: 20px 0 10px;
+            min-height: 220px;
+            margin: 16px 0 8px;
+            padding: 10px 6px 0;
+        }
+
+        .finger-row {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 8px;
             flex-wrap: wrap;
-            padding: 10px;
-        }
-
-        .cartoon-hand-container {
-            position: relative;
-            width: 200px;
-            height: 230px;
-            transition: transform 0.5s ease;
-        }
-
-        /* 右手鏡像 */
-        .cartoon-hand-container.right-hand {
-            transform: scaleX(-1);
-        }
-        /* 右手的數字氣泡要再反轉回來，否則數字會左右顛倒 */
-        .cartoon-hand-container.right-hand .finger-bubble {
-            transform: scaleX(-1);
-        }
-
-        /* ===== 完整掌心 ===== */
-        .palm-main {
-            position: absolute;
-            bottom: 0;
-            left: 25px;
-            width: 150px;
-            height: 115px;
             background: linear-gradient(to bottom, #ffedd5, #fed7aa);
             border: 4px solid #f97316;
-            border-radius: 45px 45px 55px 55px;
-            box-shadow: inset 0 -8px 0 #fdba74, 0 4px 8px rgba(0,0,0,0.1);
-            z-index: 2;
-            transition: all 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 28px 28px 36px 36px;
+            padding: 18px 16px 22px;
+            box-shadow: inset 0 -8px 0 #fdba74, 0 4px 10px rgba(0,0,0,0.08);
+            max-width: 100%;
         }
 
-        /* 拇指根部肉墊 */
-        .palm-thumb-pad {
-            position: absolute;
-            bottom: 15px;
-            left: 8px;
-            width: 55px;
-            height: 65px;
-            background: linear-gradient(135deg, #ffedd5, #fed7aa);
-            border: 4px solid #f97316;
-            border-radius: 50%;
-            z-index: 1;
-            transition: all 0.45s ease;
-        }
-
-        /* 合實拳頭時的掌心變化 */
-        .cartoon-hand-container.fist .palm-main {
-            height: 95px;
-            border-radius: 50px;
-            background: linear-gradient(to bottom, #fed7aa, #fdba74);
-        }
-        .cartoon-hand-container.fist .palm-thumb-pad {
-            transform: scale(0.85) translate(5px, 5px);
-            opacity: 0.9;
-        }
-
-        /* ===== 卡通手指（永遠5根） ===== */
         .c-finger {
-            position: absolute;
+            position: relative;
+            width: 36px;
+            height: 110px;
             background: linear-gradient(to bottom, #ffedd5, #fed7aa);
             border: 4px solid #f97316;
             border-radius: 18px 18px 12px 12px;
             cursor: pointer;
-            transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: height 0.35s ease, transform 0.35s ease, background 0.35s ease;
             transform-origin: bottom center;
             display: flex;
             justify-content: center;
             align-items: flex-start;
             padding-top: 6px;
-            z-index: 3;
             box-shadow: 0 3px 0 #fdba74;
+            flex-shrink: 0;
         }
+        .c-finger:nth-child(even) { height: 118px; }
+        .c-finger:nth-child(3n) { height: 104px; }
 
-        /* 手指關節線（增加立體感） */
         .c-finger::before {
             content: '';
             position: absolute;
@@ -201,94 +159,12 @@
             border-radius: 2px;
         }
 
-        /* 拇指 */
-        .f-thumb {
-            width: 36px;
-            height: 70px;
-            left: 2px;
-            bottom: 35px;
-            transform: rotate(-42deg);
-            transform-origin: bottom right;
-            border-radius: 20px 18px 14px 16px;
-            z-index: 4;
-        }
-        /* 食指 */
-        .f-index {
-            width: 34px;
-            height: 95px;
-            left: 42px;
-            bottom: 105px;
-        }
-        /* 中指 */
-        .f-middle {
-            width: 35px;
-            height: 105px;
-            left: 85px;
-            bottom: 108px;
-        }
-        /* 無名指 */
-        .f-ring {
-            width: 33px;
-            height: 92px;
-            left: 128px;
-            bottom: 100px;
-        }
-        /* 尾指 */
-        .f-pinky {
-            width: 29px;
-            height: 75px;
-            left: 168px;
-            bottom: 80px;
-            transform: rotate(12deg);
-            transform-origin: bottom left;
-        }
-
-        /* ===== 折起手指（慢慢收起） ===== */
-        .f-thumb.folded {
-            height: 38px;
-            transform: rotate(-55deg) translateY(18px) translateX(5px);
+        /* 點擊後慢慢收起 */
+        .c-finger.folded {
+            height: 34px;
             background: linear-gradient(to bottom, #fed7aa, #fdba74);
             box-shadow: none;
-        }
-        .f-index.folded {
-            height: 32px;
-            transform: translateY(58px) rotate(3deg);
-            background: linear-gradient(to bottom, #fed7aa, #fdba74);
-            box-shadow: none;
-        }
-        .f-middle.folded {
-            height: 32px;
-            transform: translateY(68px) rotate(-2deg);
-            background: linear-gradient(to bottom, #fed7aa, #fdba74);
-            box-shadow: none;
-        }
-        .f-ring.folded {
-            height: 30px;
-            transform: translateY(58px) rotate(2deg);
-            background: linear-gradient(to bottom, #fed7aa, #fdba74);
-            box-shadow: none;
-        }
-        .f-pinky.folded {
-            height: 28px;
-            transform: rotate(18deg) translateY(42px) translateX(-3px);
-            background: linear-gradient(to bottom, #fed7aa, #fdba74);
-            box-shadow: none;
-        }
-
-        /* 合實拳頭時，所有手指再更收緊一點 */
-        .cartoon-hand-container.fist .f-thumb.folded {
-            height: 32px;
-            transform: rotate(-70deg) translateY(22px) translateX(12px);
-        }
-        .cartoon-hand-container.fist .f-index.folded,
-        .cartoon-hand-container.fist .f-middle.folded,
-        .cartoon-hand-container.fist .f-ring.folded {
-            height: 26px;
-            transform: translateY(72px);
-        }
-        .cartoon-hand-container.fist .f-pinky.folded {
-            height: 24px;
-            transform: rotate(25deg) translateY(50px) translateX(-5px);
+            cursor: default;
         }
 
         /* 數字氣泡 */
@@ -446,123 +322,49 @@
         renderCartoonHands(currentHand);
     }
 
-    // 永遠顯示完整手掌（5根手指），需要數的豎起，多餘的一開始就收起
+    // 根據「手」的數字，顯示一排手指（+9 就 9 根，不分左右手）
     function renderCartoonHands(handCount) {
         const container = document.getElementById('hand-area');
         container.innerHTML = '';
 
-        // 左手永遠完整出現（5根）
-        // handCount <= 5 時：前 handCount 根豎起，其餘一開始收起
-        // handCount > 5 時：全部 5 根豎起
-        const leftUpright = Math.min(handCount, 5);
-        const leftHand = createFullHand(0, leftUpright, false);
-        container.appendChild(leftHand);
+        const row = document.createElement('div');
+        row.className = 'finger-row';
 
-        // 只要需要超過 5 根，就出現完整右手
-        if (handCount > 5) {
-            const rightUpright = handCount - 5;   // 右手要豎起幾根
-            const rightHand = createFullHand(5, rightUpright, true);
-            container.appendChild(rightHand);
-        }
-    }
-
-    /**
-     * 建立一隻「完整」手掌（永遠 5 根手指）
-     * startIndex   : 這隻手在整體計數的起始偏移（0 或 5）
-     * uprightCount : 這隻手要豎起幾根手指（其餘一開始就收起）
-     * isRight      : 是否為右手（需要鏡像）
-     */
-    function createFullHand(startIndex, uprightCount, isRight) {
-        const handWrap = document.createElement('div');
-        handWrap.className = 'cartoon-hand-container' + (isRight ? ' right-hand' : '');
-        handWrap.id = isRight ? 'hand-right' : 'hand-left';
-
-        // 完整掌心
-        handWrap.innerHTML = `
-            <div class="palm-thumb-pad"></div>
-            <div class="palm-main"></div>
-        `;
-
-        const fingerClasses = ['f-thumb', 'f-index', 'f-middle', 'f-ring', 'f-pinky'];
-
-        // 永遠生成完整的 5 根手指
-        for (let i = 0; i < 5; i++) {
-            const globalIndex = startIndex + i + 1;          // 1~5 或 6~10
-            const isUpright = i < uprightCount;              // 是否需要豎起讓學生點
-            const displayNum = currentMind + globalIndex;
-
+        for (let i = 1; i <= handCount; i++) {
+            const displayNum = currentMind + i;
             const finger = document.createElement('div');
-            finger.className = `c-finger ${fingerClasses[i]}`;
-            finger.id = `finger-${globalIndex}`;
-            finger.dataset.index = globalIndex;
-
-            if (isUpright) {
-                // 需要計算的手指：豎起、可點擊
-                finger.style.cursor = 'pointer';
-                finger.onclick = () => clickFinger(globalIndex, displayNum);
-                finger.innerHTML = `<div class="finger-bubble" id="bubble-${globalIndex}">${displayNum}</div>`;
-            } else {
-                // 多餘的手指：一開始就收起，不可點
-                finger.classList.add('folded');
-                finger.style.cursor = 'default';
-                finger.style.opacity = '0.7';
-            }
-
-            handWrap.appendChild(finger);
+            finger.className = 'c-finger';
+            finger.id = `finger-${i}`;
+            finger.onclick = () => clickFinger(i, displayNum);
+            finger.innerHTML = `<div class="finger-bubble" id="bubble-${i}">${displayNum}</div>`;
+            row.appendChild(finger);
         }
 
-        return handWrap;
+        container.appendChild(row);
     }
 
     function clickFinger(index, num) {
-        // 必須順序點擊
+        // 由左到右順序點擊即可（不必由拇指開始）
         if (index !== currentClickIndex + 1) {
-            speakCantonese("請順序點擊手指喔！");
-            document.getElementById('hint-text').innerText = '⚠️ 請由左到右、由拇指開始順序點擊！';
+            speakCantonese("請由左到右順序點擊手指喔！");
+            document.getElementById('hint-text').innerText = '⚠️ 請由左到右順序點擊手指';
             return;
         }
 
         currentClickIndex++;
         playDingSound();
 
-        // 顯示數字氣泡 + 折起手指
         const bubble = document.getElementById(`bubble-${index}`);
         const finger = document.getElementById(`finger-${index}`);
-        if (bubble) {
-            bubble.classList.add('show');
-        }
-        if (finger) {
-            finger.classList.add('folded');
-        }
+        if (bubble) bubble.classList.add('show');
+        if (finger) finger.classList.add('folded');
 
-        // 只讀出當前數字（學生靠聽覺 + 看手指上的數字）
         speakCantonese(num.toString());
 
-        // 底部提示只顯示進度，絕不寫出答案數字
         if (currentClickIndex < totalToFold) {
             document.getElementById('hint-text').innerText = `已數 ${currentClickIndex} 根，請繼續點下一根手指`;
         } else {
             document.getElementById('hint-text').innerText = '請看看最後一根手指上的數字，然後把答案填到上面空格裡';
-        }
-
-        // 檢查是否要合實拳頭
-        checkAndMakeFist();
-    }
-
-    // 檢查是否要合實拳頭（全部需要的手指都折完才合）
-    function checkAndMakeFist() {
-        const leftNeeded = Math.min(5, totalToFold);
-
-        // 左手：需要的手指全部折完 → 合拳
-        if (currentClickIndex >= leftNeeded) {
-            const leftHand = document.getElementById('hand-left');
-            if (leftHand) leftHand.classList.add('fist');
-        }
-
-        // 右手：需要的手指全部折完 → 合拳
-        if (totalToFold > 5 && currentClickIndex >= totalToFold) {
-            const rightHand = document.getElementById('hand-right');
-            if (rightHand) rightHand.classList.add('fist');
         }
     }
 
