@@ -1,336 +1,451 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-HK">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>心手口趣味加法練習機</title>
+    <title>「心手口」趣味加法練習機</title>
+    <!-- Canvas Confetti 答對特效庫 -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         * {
             box-sizing: border-box;
-            font-family: "MicroSoft YaHei", "BiauKai", sans-serif;
+            font-family: "PingFang HK", "Chalkboard SE", "Comic Sans MS", "微軟正黑體", sans-serif;
             user-select: none;
         }
         body {
-            background-color: #eef9f2;
+            background: linear-gradient(to bottom, #e0f2fe, #dcfce7);
             margin: 0;
-            padding: 20px;
+            padding: 15px;
             display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             min-height: 100vh;
         }
         .container {
-            background: white;
-            border-radius: 25px;
-            padding: 25px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            max-width: 800px;
+            background: #ffffff;
+            border-radius: 30px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            max-width: 900px;
             width: 100%;
             text-align: center;
-            border: 4px solid #8bc34a;
+            border: 6px solid #86efac;
+            position: relative;
+        }
+        
+        /* 標題與語音引導 */
+        .header-area {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 15px;
         }
         h1 {
-            color: #2e7d32;
-            margin-top: 0;
             font-size: 32px;
+            margin: 0;
+            background: linear-gradient(45deg, #0284c7, #f97316);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
-        .speaker-btn {
-            background-color: #ff9800;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            font-size: 18px;
-            border-radius: 50px;
+        .btn-icon {
+            background: #fef08a;
+            border: 3px solid #eab308;
+            border-radius: 50%;
+            width: 55px;
+            height: 55px;
+            font-size: 26px;
             cursor: pointer;
-            box-shadow: 0 4px #e65100;
-            margin-bottom: 20px;
-            transition: 0.1s;
+            box-shadow: 0 4px 0 #ca8a04;
+            transition: transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .speaker-btn:active {
+        .btn-icon:active {
             transform: translateY(4px);
             box-shadow: none;
         }
-        
-        /* 題目顯示區 */
+
+        /* 題目區域 */
         .equation-box {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            background-color: #fef9c3;
+            border: 5px solid #fde047;
+            border-radius: 25px;
+            padding: 15px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+        .num-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .tag-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #ea580c;
+        }
+        .num-val {
+            font-size: 55px;
+            font-weight: 900;
+            color: #0369a1;
+            line-height: 1.1;
+        }
+        .operator {
+            font-size: 45px;
+            font-weight: bold;
+            color: #2563eb;
+        }
+        .ans-input {
+            width: 90px;
+            height: 70px;
+            font-size: 45px;
+            text-align: center;
+            border: 4px solid #3b82f6;
+            border-radius: 15px;
+            outline: none;
+            font-weight: bold;
+            color: #1d4ed8;
+            background: #ffffff;
+        }
+
+        /* 手指互動區 */
+        .hand-area {
             display: flex;
             justify-content: center;
             align-items: flex-end;
             gap: 20px;
-            background-color: #fffde7;
-            border: 3px dashed #fbc02d;
-            border-radius: 20px;
-            padding: 20px;
-            margin-bottom: 25px;
-        }
-        .num-group {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .label-tag {
-            font-size: 18px;
-            font-weight: bold;
-            color: #d84315;
-            margin-bottom: 5px;
-        }
-        .symbol {
-            font-size: 48px;
-            font-weight: bold;
-            color: #333;
-            line-height: 1;
-            margin-bottom: 10px;
-        }
-        .num-display {
-            font-size: 64px;
-            font-weight: bold;
-            color: #1565c0;
-            line-height: 1;
-        }
-
-        /* 互動手掌區 */
-        .hand-container {
-            display: flex;
-            justify-content: center;
-            align-items: flex-end;
-            gap: 15px;
-            height: 220px;
-            margin: 30px 0;
+            min-height: 200px;
+            margin: 20px 0;
             position: relative;
         }
-        .finger-wrapper {
+        .hand-group {
+            display: flex;
+            gap: 10px;
+            background: #ffedd5;
+            padding: 15px 15px 0 15px;
+            border-radius: 30px 30px 10px 10px;
+            border: 3px solid #fdba74;
+            border-bottom: none;
+        }
+        .finger-item {
             display: flex;
             flex-direction: column;
             align-items: center;
             cursor: pointer;
         }
-        .count-bubble {
-            width: 40px;
-            height: 40px;
-            background-color: #e91e63;
+        .num-bubble {
+            width: 38px;
+            height: 38px;
+            background-color: #0284c7;
             color: white;
             border-radius: 50%;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 22px;
+            font-size: 20px;
             font-weight: bold;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             visibility: hidden;
             box-shadow: 0 3px 6px rgba(0,0,0,0.2);
-            animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        @keyframes pop {
-            0% { transform: scale(0); }
-            100% { transform: scale(1); }
-        }
-        .finger {
-            width: 40px;
-            height: 120px;
-            background-color: #ffcc80;
-            border: 3px solid #ef6c00;
-            border-radius: 20px 20px 5px 5px;
+        .finger-shape {
+            width: 32px;
+            height: 100px;
+            background-color: #fed7aa;
+            border: 3px solid #f97316;
+            border-radius: 15px 15px 5px 5px;
             transition: all 0.2s ease;
         }
-        .finger.folded {
-            height: 40px;
-            background-color: #ffe0b2;
+        .finger-shape.folded {
+            height: 35px;
+            background-color: #ffedd5;
             border-style: dashed;
         }
 
-        /* 手掌底座 */
-        .palm {
-            position: absolute;
-            bottom: -20px;
-            width: 260px;
-            height: 60px;
-            background-color: #ffcc80;
-            border: 3px solid #ef6c00;
-            border-top: none;
-            border-radius: 0 0 30px 30px;
-            z-index: -1;
+        /* 星星總結提示 */
+        .star-box {
+            display: none;
+            background: #fef08a;
+            border: 3px solid #eab308;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 22px;
+            font-weight: bold;
+            color: #854d0e;
+            margin: 10px auto;
+            width: fit-content;
+            animation: bounce 0.5s infinite alternate;
+        }
+        @keyframes bounce {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-5px); }
         }
 
-        /* 操作區 */
+        /* 按鈕區 */
         .action-area {
-            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-top: 15px;
         }
-        .instruction {
-            font-size: 20px;
-            color: #333;
-            margin-bottom: 15px;
-            font-weight: bold;
-        }
-        .answer-btn {
-            background-color: #4caf50;
+        .btn-green {
+            background-color: #22c55e;
             color: white;
             border: none;
-            padding: 12px 30px;
+            padding: 10px 25px;
             font-size: 22px;
-            border-radius: 15px;
+            font-weight: bold;
+            border-radius: 50px;
             cursor: pointer;
-            box-shadow: 0 5px #2e7d32;
-            display: none;
+            box-shadow: 0 5px 0 #15803d;
         }
-        .answer-btn:active {
-            transform: translateY(4px);
+        .btn-green:active {
+            transform: translateY(5px);
             box-shadow: none;
         }
-        .result-box {
-            font-size: 28px;
-            color: #d32f2f;
+        .btn-blue {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            font-size: 22px;
             font-weight: bold;
-            margin-top: 15px;
-            min-height: 40px;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #1d4ed8;
+            display: none;
+        }
+        .btn-blue:active {
+            transform: translateY(5px);
+            box-shadow: none;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>心手口加法學習機</h1>
-    <button class="speaker-btn" onclick="speakText(instructionText)">🔊 聽題目與說明</button>
+    <!-- 標題與廣東話嘴巴引導按鈕 -->
+    <div class="header-area">
+        <button class="btn-icon" onclick="playMouthSpeech()" title="讀出題目">🗣️</button>
+        <h1>「心手口」趣味加法練習機</h1>
+    </div>
 
     <!-- 題目區域 -->
     <div class="equation-box">
-        <!-- 心（加數/心中的數） -->
-        <div class="num-group">
-            <div class="label-tag">❤️ 心 (記在心中)</div>
-            <div class="num-display" id="num-mind">4</div>
+        <div class="num-card">
+            <div class="tag-title">❤️ 心</div>
+            <div class="num-val" id="num-mind">4</div>
         </div>
-
-        <div class="symbol">+</div>
-
-        <!-- 手（被加數/伸出的手指數） -->
-        <div class="num-group">
-            <div class="label-tag">✋ 手 (伸出手指)</div>
-            <div class="num-display" id="num-hand">5</div>
+        <div class="operator">＋</div>
+        <div class="num-card">
+            <div class="tag-title">✋ 手</div>
+            <div class="num-val" id="num-hand">5</div>
         </div>
-
-        <div class="symbol">=</div>
-
-        <div class="num-group">
-            <div class="label-tag">❓ 答案</div>
-            <div class="num-display" id="answer-display">?</div>
+        <div class="operator">＝</div>
+        <div class="num-card">
+            <div class="tag-title">答案</div>
+            <input type="number" class="ans-input" id="user-ans" placeholder="?" />
         </div>
+        
+        <!-- 小提示燈泡按鈕 -->
+        <button class="btn-icon" style="position: absolute; right: -15px; bottom: -15px;" onclick="playBulbSpeech()" title="小提示">💡</button>
     </div>
 
-    <!-- 說明與提示 -->
-    <div class="instruction" id="instruction-text">
-        請用滑鼠順序點擊手指，把手指收起來，並在口中數數！
+    <!-- 手指互動區 -->
+    <div class="hand-area" id="hand-area">
+        <!-- 由 JavaScript 動態生成手指 -->
     </div>
 
-    <!-- 互動手指區域 -->
-    <div class="hand-container" id="hand-container">
-        <!-- 手指會由 JavaScript 動態生成 -->
-        <div class="palm"></div>
+    <!-- 星星總結提示 -->
+    <div class="star-box" id="star-box">
+        ⭐ 最後數到的數是 <span id="star-num">9</span>！
     </div>
 
-    <!-- 操作按鈕與結果 -->
+    <!-- 操作與下一題按鈕 -->
     <div class="action-area">
-        <button class="answer-btn" id="calc-btn" onclick="checkAnswer()">公布答案！</button>
-        <div class="result-box" id="result-box"></div>
+        <button class="btn-green" onclick="checkAnswer()">✔️ 核對答案</button>
+        <button class="btn-blue" id="next-btn" onclick="nextQuestion()">➡️ 下一題</button>
     </div>
 </div>
 
 <script>
-    // 預設題目：4 + 5
-    const mindNum = 4; // 心裡的數
-    const handNum = 5; // 手指的數
-    const targetAnswer = mindNum + handNum;
-    
-    let currentClickCount = 0;
-    let instructionText = `題目是 ${mindNum} 加 ${handNum}。心裡記住 ${mindNum}，請用滑鼠點擊手指，順序把手指收起來，接著數：5、6、7、8、9！`;
+    // 全局變量
+    let currentMind = 4;
+    let currentHand = 5;
+    let targetAnswer = 9;
+    let currentClickIndex = 0;
 
-    // 初始化頁面
-    window.onload = function() {
-        document.getElementById('num-mind').innerText = mindNum;
-        document.getElementById('num-hand').innerText = handNum;
-        createFingers(handNum);
-        speakText(instructionText);
-    };
+    // 音效合成 (叮一聲)
+    function playDingSound() {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, ctx.currentTime);
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.3);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.3);
+    }
 
-    // 語音朗讀功能 (HTML5 SpeechSynthesis)
-    function speakText(text) {
+    // 廣東話語音朗讀 (zh-HK)
+    function speakCantonese(text, callback) {
         if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel(); // 停止先前的發音
+            window.speechSynthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'zh-TW'; // 設定繁體中文
-            utterance.rate = 0.85;     // 放慢語速適合小學生
-            utterance.pitch = 1.1;     // 稍微提高音調使其聽起來溫柔
+            utterance.lang = 'zh-HK'; // 設定廣東話
+            utterance.rate = 0.85;    // 適合小學生的放慢語速
+            utterance.pitch = 1.1;
+            if (callback) {
+                utterance.onend = callback;
+            }
             window.speechSynthesis.speak(utterance);
-        } else {
-            alert("您的瀏覽器不支援語音朗讀功能。");
         }
     }
 
-    // 動態建立手指數量
-    function createFingers(count) {
-        const container = document.getElementById('hand-container');
-        // 清空手指（保留掌心）
-        const palm = container.querySelector('.palm');
+    // 初始化題目
+    function initQuestion(mind, hand) {
+        currentMind = mind;
+        currentHand = hand;
+        targetAnswer = mind + hand;
+        currentClickIndex = 0;
+
+        document.getElementById('num-mind').innerText = currentMind;
+        document.getElementById('num-hand').innerText = currentHand;
+        document.getElementById('user-ans').value = '';
+        document.getElementById('star-box').style.display = 'none';
+        document.getElementById('next-btn').style.display = 'none';
+
+        renderFingers(currentHand);
+
+        // 自動播放老師引導語音
+        let countSeq = [];
+        for (let i = 1; i <= currentHand; i++) {
+            countSeq.push(currentMind + i);
+        }
+        let guideSpeech = `依家用滑鼠，由大拇指開始，一隻一隻手指收埋佢，跟住老師一齊數：${countSeq.join('、')}。`;
+        speakCantonese(guideSpeech);
+    }
+
+    // 動態渲染手指 (支援單手與雙手)
+    function renderFingers(handCount) {
+        const container = document.getElementById('hand-area');
         container.innerHTML = '';
-        container.appendChild(palm);
+
+        let totalFingers = handCount;
+        let leftHandCount = totalFingers > 5 ? 5 : totalFingers;
+        let rightHandCount = totalFingers > 5 ? totalFingers - 5 : 0;
+
+        // 生成左手/單手
+        container.appendChild(createHandGroup(leftHandCount, 0));
+
+        // 如果超過 5 隻，生成右手
+        if (rightHandCount > 0) {
+            container.appendChild(createHandGroup(rightHandCount, 5));
+        }
+    }
+
+    function createHandGroup(count, startIndex) {
+        const group = document.createElement('div');
+        group.className = 'hand-group';
 
         for (let i = 1; i <= count; i++) {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'finger-wrapper';
-            wrapper.dataset.index = i;
-            
-            // 計算點擊後要顯示的順數數字 (例如：4+1=5, 4+2=6...)
-            const countNum = mindNum + i;
+            let globalIndex = startIndex + i;
+            let displayNum = currentMind + globalIndex;
 
-            wrapper.innerHTML = `
-                <div class="count-bubble" id="bubble-${i}">${countNum}</div>
-                <div class="finger" id="finger-${i}"></div>
+            const fingerItem = document.createElement('div');
+            fingerItem.className = 'finger-item';
+            fingerItem.onclick = () => clickFinger(globalIndex, displayNum);
+
+            fingerItem.innerHTML = `
+                <div class="num-bubble" id="bubble-${globalIndex}">${displayNum}</div>
+                <div class="finger-shape" id="finger-${globalIndex}"></div>
             `;
-
-            wrapper.onclick = function() {
-                clickFinger(i, countNum);
-            };
-
-            container.appendChild(wrapper);
+            group.appendChild(fingerItem);
         }
+        return group;
     }
 
-    // 點擊手指邏輯
-    function clickFinger(index, countNum) {
-        // 限制必須按順序點擊
-        if (index !== currentClickCount + 1) {
-            speakText("請照順序點擊下一隻手指喔！");
+    // 手指點擊互動
+    function clickFinger(index, num) {
+        if (index !== currentClickIndex + 1) {
+            speakCantonese("請照順序收埋手指喔！");
             return;
         }
 
-        currentClickCount++;
+        currentClickIndex++;
+        playDingSound();
 
-        // 顯示對應數字氣泡
-        const bubble = document.getElementById(`bubble-${index}`);
-        bubble.style.visibility = 'visible';
+        // 顯示數字氣泡與收起手指
+        document.getElementById(`bubble-${index}`).style.visibility = 'visible';
+        document.getElementById(`finger-${index}`).classList.add('folded');
 
-        // 改變手指樣式為收起
-        const finger = document.getElementById(`finger-${index}`);
-        finger.classList.add('folded');
+        // 讀出對應順數數字
+        speakCantonese(num.toString());
 
-        // 語音朗讀該數值
-        speakText(countNum.toString());
+        // 當所有手指收起時
+        if (currentClickIndex === currentHand) {
+            document.getElementById('star-num').innerText = targetAnswer;
+            document.getElementById('star-box').style.display = 'block';
 
-        // 當所有手指都收起後
-        if (currentClickCount === handNum) {
-            document.getElementById('instruction-text').innerText = `非常好！最後數到的數字是 ${targetAnswer}！`;
-            document.getElementById('calc-btn').style.display = 'inline-block';
             setTimeout(() => {
-                speakText(`太棒了！手指都收起來了，最後數到了 ${targetAnswer}。請點擊公布答案！`);
-            }, 1000);
+                let summarySpeech = `哇！我哋數到 ${targetAnswer} 啦！所以心裏面嘅 ${currentMind} 加埋手指嘅 ${currentHand}，答案就係 ${targetAnswer} 喇！`;
+                speakCantonese(summarySpeech);
+            }, 800);
         }
     }
 
-    // 結算答案
-    function checkAnswer() {
-        document.getElementById('answer-display').innerText = targetAnswer;
-        document.getElementById('result-box').innerText = `🎉 答對了！ ${mindNum} + ${handNum} = ${targetAnswer}`;
-        speakText(`答對了！${mindNum} 加 ${handNum} 等於 ${targetAnswer}！你太聰明了！`);
+    // 按鈕功能：左上角嘴巴
+    function playMouthSpeech() {
+        speakCantonese(`${currentMind} 加 ${currentHand} 等於幾多呀？`);
     }
+
+    // 按鈕功能：右下角小燈泡提示
+    function playBulbSpeech() {
+        speakCantonese(`心裏面記住 ${currentMind}，加上手指 ${currentHand}，等於幾多呢？`);
+    }
+
+    // 核對答案
+    function checkAnswer() {
+        const userVal = parseInt(document.getElementById('user-ans').value);
+        if (isNaN(userVal)) {
+            speakCantonese("請先在空格填寫答案喔！");
+            return;
+        }
+
+        if (userVal === targetAnswer) {
+            // 彩帶特效
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+            document.getElementById('next-btn').style.display = 'inline-block';
+            speakCantonese("答對咗啦！你真係棒！");
+        } else {
+            speakCantonese("再數一次手指試試看！");
+        }
+    }
+
+    // 隨機生成下一題 (18以內加數)
+    function nextQuestion() {
+        let nextMind = Math.floor(Math.random() * 9) + 1; // 1~9
+        let maxHand = 18 - nextMind;
+        let handLimit = Math.min(9, maxHand);
+        let nextHand = Math.floor(Math.random() * handLimit) + 1; // 1~9
+
+        initQuestion(nextMind, nextHand);
+    }
+
+    // 頁面載入後自動開啟第一題 (預設 4 + 5)
+    window.onload = function() {
+        initQuestion(4, 5);
+    };
 </script>
 
 </body>
